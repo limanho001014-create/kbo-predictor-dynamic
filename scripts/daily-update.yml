@@ -1,0 +1,104 @@
+name: Daily KBO Data Update
+
+# 매일 한국 시간 04:00 (UTC 19:00 전날)
+on:
+  schedule:
+    - cron: '0 19 * * *'  # UTC 19:00 = KST 04:00
+  workflow_dispatch:  # 수동 실행 가능
+
+# Push 권한 부여
+permissions:
+  contents: write
+
+jobs:
+  daily-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      # Ubuntu에 Chromium + ChromeDriver 직접 설치
+      - name: Install Chromium and ChromeDriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          chromium-browser --version
+          chromedriver --version
+      
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # 핵심 의존성 명시 (requirements.txt 보완)
+          pip install pandas numpy scikit-learn joblib
+          pip install selenium webdriver-manager
+          pip install beautifulsoup4 requests
+          # requirements.txt가 있으면 추가 설치
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      - name: Verify environment
+        run: |
+          python --version
+          pip list | grep -i selenium
+          which chromedriver || echo "chromedriver not in PATH"
+          ls -la data/ || echo "data/ folder not found"
+          ls -la scripts/ || echo "scripts/ folder not found"
+      
+      # === 데이터 수집 단계 ===
+      
+      - name: Step 1 - Collect game data
+        run: python scripts/daily_collect_v2.py
+        continue-on-error: true
+        env:
+          PYTHONUNBUFFERED: 1
+      
+      - name: Step 2 - Collect player stats (약 7-10분)
+        run: python scripts/daily_collect_players.py
+        continue-on-error: true
+        env:
+          PYTHONUNBUFFERED: 1
+      
+      - name: Step 3 - Compute team stats
+        run: python scripts/compute_team_stats.py
+        continue-on-error: true
+        env:
+          PYTHONUNBUFFERED: 1
+      
+      # === 예측 단계 ===
+      
+      - name: Step 4 - Update accuracy (yesterday's predictions)
+        run: python scripts/update_accuracy.py
+        continue-on-error: true
+        env:
+          PYTHONUNBUFFERED: 1
+      
+      - name: Step 5 - Generate today's predictions
+        run: python scripts/daily_predict.py
+        continue-on-error: true
+        env:
+          PYTHONUNBUFFERED: 1
+      
+      # === 결과 commit ===
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 변경사항 확인
+          git add data/ kbo_data/ 2>/dev/null || true
+          
+          # 변경사항 있을 때만 commit
+          if git diff --staged --quiet; then
+            echo "변경사항 없음"
+          else
+            git commit -m "🤖 Daily update: $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+            echo "✅ Push 완료"
+          fi

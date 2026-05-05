@@ -1,0 +1,6 @@
+﻿prediction_id,game_date,home_team,away_team,predicted_winner,home_win_prob,away_win_prob,model_version,predicted_at,actual_winner,is_correct,scored_at
+PRED_2026-05-05_KIA_한화,2026-05-05,KIA,한화,홈승,0.5229,0.4771,v3-dynamic,2026-05-05 14:54:30,,PENDING,
+PRED_2026-05-05_KT_롯데,2026-05-05,KT,롯데,홈승,0.5391,0.4609,v3-dynamic,2026-05-05 14:54:30,,PENDING,
+PRED_2026-05-05_LG_두산,2026-05-05,LG,두산,홈승,0.5388,0.4612,v3-dynamic,2026-05-05 14:54:30,,PENDING,
+PRED_2026-05-05_SSG_NC,2026-05-05,SSG,NC,홈승,0.5847,0.4153,v3-dynamic,2026-05-05 14:54:30,,PENDING,
+PRED_2026-05-05_삼성_키움,2026-05-05,삼성,키움,홈승,0.5174,0.4826,v3-dynamic,2026-05-05 14:54:30,,PENDING,
