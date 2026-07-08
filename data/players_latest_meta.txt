@@ -1,4 +1,4 @@
-last_updated: 2026-07-07 20:55:53
+last_updated: 2026-07-08 20:27:09
 year: 2026
-hitter_count: 322
-pitcher_count: 268
+hitter_count: 324
+pitcher_count: 269
